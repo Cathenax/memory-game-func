@@ -1,0 +1,60 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: #c5d5da;
+  min-height: 100vh;
+  margin: 0;
+  font-family: 'Patrick Hand', sans-serif;
+  display: flex;
+  justify-content: center;
+}
+
+#root {
+  display: flex;
+  align-items: center;
+}
+
+.game {
+  display: grid;
+  height: 80vh;
+  width: 60vw;
+}
+
+.gameboard[columns="4"] {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);  
+  justify-items: center;
+  align-items: center;
+}
+
+.gameboard[columns="6"] {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  justify-items: center;
+  align-items: center;
+}
+
+.gameboard[columns="8"] {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  justify-items: center;
+  align-items: center;
+}
+
+.gameheader {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.gamefooter {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  align-items: center;
+}
