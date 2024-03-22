@@ -6,8 +6,13 @@ export default function Time(_maxTime = -1, _time = 0) {
   function initialize(_maxTime = -1, _time = 0){
     // maxTime = -1 indicates that user doesn't limit the time
     maxTime = _maxTime;
-    remainTime = _maxTime;
     time = _time;
+    if(maxTime > 0){
+      remainTime = maxTime - time;
+    }
+    else{
+      remainTime = -1;
+    }
   }
   function setMaxTime(_maxTime){
     maxTime = _maxTime;
@@ -16,12 +21,7 @@ export default function Time(_maxTime = -1, _time = 0) {
     remainTime = _remainTime;
   }
   function getRemainTime () {
-    if(maxTime === -1){
-      return '∞';
-    }
-    else{
-      return remainTime;
-    }
+    return remainTime;
   }
   function setTime (_time){
     time = _time;

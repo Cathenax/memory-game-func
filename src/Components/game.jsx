@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { Button, Modal, Select, Form, message} from 'antd';
 
 import Card from './card';
@@ -15,6 +15,7 @@ export default function Game() {
   const [difficulty, setDifficulty] = useState(new Difficulty());
   const [move, setMove] = useState(new Move());
   const [time, setTime] = useState(new Time());
+  const intervalRef = useRef(null);
   const [cards, setCards] = useState([]);
   const [playing, setPlaying] = useState(true);
   const [showStatus, setShowStatus] = useState(false);
@@ -72,7 +73,8 @@ export default function Game() {
   const resetTime = (dbtime) => {
     let newTime;
     if(!dbtime){
-      newTime = new Time();
+      // newTime = new Time(time.maxTime);
+      newTime = new Time(5);
     }
     else{
       newTime = new Time(dbtime.maxtime, dbtime.time);
@@ -96,12 +98,13 @@ export default function Game() {
     resetMoveAndScore();
     resetCards();
     resetTurns();
+    resetTime();
     message.success("New game starts!");
   }
 
-  const stopOrResume = async() => {
+  const stopOrResume = async(stop) => {
     //stop the game
-    if(playing){
+    if(playing || stop){
       //clear the selections
       //diable all the buttons
       const newCards = cards.map((card) => {
@@ -228,7 +231,7 @@ export default function Game() {
       userCards = cards;
     }
     const userScore = score.getScore();
-    const userTime = {time:time.getTime(), maxtime: time.getMaxTime()};
+    const userTime = {time:time.time, maxtime: time.maxTime};
     const userMove = {step:move.getSteps(), maxstep:move.getMaxSteps()};
     const userDiff = {cardnum:difficulty.getCardNum(), delaytime: difficulty.getDelayTime()};
     const userData = {score:userScore, time:userTime, cards:userCards, move:userMove, difficulty:userDiff};
@@ -295,6 +298,8 @@ export default function Game() {
     matchCards();
   }, [secondSelection]);
   
+  // get data from db to resume the saved game when mounted
+  // and also, start a timer to count the time played
   useEffect(()=>{
     async function call(db){
       //get game data from firestore db
@@ -313,7 +318,31 @@ export default function Game() {
       }
     }
     call(db);
+    let interval = setInterval(()=>{
+      setTime((time)=>{
+        const newTime = new Time(time.maxTime, time.time + 1);
+        return newTime;
+      });
+    },1000);
+    return (()=>{
+      clearInterval(interval);
+    })
   }, []);
+
+  // // using my own hooks to setup an interval
+  // useInterval(() => {    
+  //   setTime((time)=>{
+  //     const newTime = new Time(time.maxTime, time.time + 1);
+  //     return newTime;
+  //   });
+  // }, 1000);
+
+  useEffect(()=>{
+    if(time.maxTime === time.time){
+      message.error("Time is over!");
+      stopOrResume(true);
+    }
+  },[time])
 
   return (
     <div className='game'>
@@ -378,10 +407,31 @@ export default function Game() {
       <div className='gamefooter'>
         <span>Total Moves: {move.getSteps()}</span> 
         <span>Moves Remain: {move.getRemainSteps()}</span>
-        <span>Total Time: {time.getTime()}</span>
-        <span>Time Remain: {time.getRemainTime()}</span>
+        <span>Total Time: {time.time}</span>
+        <span>Time Remain: {time.maxTime === -1 ? '∞' : time.maxTime - time.time}</span>
         <span>Total Score: {score.getScore()}</span>
       </div>
     </div>
   )
+}
+
+//another way to implement the interval
+function useInterval(callback, delay) {
+  const savedCallback = useRef();
+
+  // Remember the latest callback.
+  useEffect(() => {
+    savedCallback.current = callback;
+  }, [callback]);
+
+  // Set up the interval.
+  useEffect(() => {
+    function tick() {
+      savedCallback.current();
+    }
+    if (delay !== null) {
+      let id = setInterval(tick, delay);
+      return () => clearInterval(id);
+    }
+  }, [delay]);
 }
