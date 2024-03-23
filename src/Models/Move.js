@@ -28,7 +28,7 @@ export default function Move(_maxMove = -1, _moveSteps = 0) {
     }
   }
   
-  initialize(_maxMove, moveSteps);
+  initialize(_maxMove, _moveSteps);
   me.maxMove = maxMove;
   me.moveSteps = moveSteps;
   me.setMaxMoves = setMaxMoves;

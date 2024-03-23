@@ -1,14 +1,12 @@
-export default function Difficulty(_cardNum = 16, _delayTime = 1000, _maxTime = -1) {
+export default function Difficulty(_cardNum = 16, _delayTime = 1000) {
   const me = {};
   let cardNum;
   let delayTime;
-  let maxTime;
 
   function initialize(_cardNum = 16, _delayTime = 1000){
     //default card number is 16, a 4x4 game board
     cardNum = _cardNum * 1;
     delayTime = _delayTime * 1;
-    maxTime = _maxTime * 1;
   }
   function setCardNum (_cardNum) {
     cardNum = _cardNum * 1;
@@ -31,7 +29,6 @@ export default function Difficulty(_cardNum = 16, _delayTime = 1000, _maxTime = 
   me.getDelayTime = getDelayTime;
   me.cardNum = cardNum;
   me.delayTime = delayTime;
-  me.maxTime = maxTime;
 
   return me;
 }

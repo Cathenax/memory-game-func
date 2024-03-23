@@ -16,6 +16,7 @@ export default function Game() {
   const [move, setMove] = useState(new Move());
   const [time, setTime] = useState(new Time());
   const intervalRef = useRef(null);
+  const resumeBtnRef = useRef(null);
   const [cards, setCards] = useState([]);
   const [playing, setPlaying] = useState(true);
   const [showStatus, setShowStatus] = useState(false);
@@ -54,7 +55,12 @@ export default function Game() {
         });
     }
     else{
-      newCards = dbcards;
+      newCards = dbcards.map((card)=>{
+        if(card.matchFound === false){
+          card.disabled = false;
+        }
+        return card;
+      });
     }
     setCards(newCards);
   }
@@ -73,8 +79,8 @@ export default function Game() {
   const resetTime = (dbtime) => {
     let newTime;
     if(!dbtime){
-      // newTime = new Time(time.maxTime);
-      newTime = new Time(5);
+      newTime = new Time(time.maxTime);
+      // newTime = new Time(5);
     }
     else{
       newTime = new Time(dbtime.maxtime, dbtime.time);
@@ -99,21 +105,31 @@ export default function Game() {
     resetCards();
     resetTurns();
     resetTime();
+    setPlaying(true);
+    clearInterval(intervalRef.current);
+    setNewInterval();
+    resumeBtnRef.current.disabled = false;
     message.success("New game starts!");
   }
 
   const stopOrResume = async(stop) => {
     //stop the game
+    //if there's a value of stop, means the game count down to zero
+    //have to disable resume button at that time
     if(playing || stop){
-      //clear the selections
+      //if stop
+      if(stop){
+        resumeBtnRef.current.disabled = true;
+      }
       //diable all the buttons
       const newCards = cards.map((card) => {
         return {...card, disabled:true};
       })
       //stop counting time
-
+      clearInterval(intervalRef.current);
       //renew the state
       setPlaying(false);
+      //clear the selections
       setFirstSelection(null);
       setSecondSelection(null);
       setCards(newCards);
@@ -125,7 +141,7 @@ export default function Game() {
         return {...card, disabled:false};
       })
       //start counting time
-
+      setNewInterval();
       //renew the state
       setPlaying(true);
       setFirstSelection(null);
@@ -134,6 +150,7 @@ export default function Game() {
     }
   }
 
+  // if user click on newGame or change the difficulty, restart
   useEffect(()=>{
     if(newGameStatus === true){
       newGame();
@@ -143,6 +160,7 @@ export default function Game() {
 
   const updateSettings = () => {
     const difficultyOption = diffRef.current.getFieldsValue().difficulty;
+    const {flipBackTime, maxTime, maxMove} = diffRef.current.getFieldsValue();
     let cardNumber;
     if(difficultyOption === 'Easy'){
       cardNumber = 16;
@@ -153,8 +171,13 @@ export default function Game() {
     else{
       cardNumber = 64;
     }
-    const newDifficulty = Difficulty(cardNumber);
+    // * 1000 because the delayTime in difficulty is in ms
+    const newDifficulty = Difficulty(cardNumber, flipBackTime * 1000);
+    const newMove = Move(maxMove, 0);
+    const newTime = Time(maxTime, 0);
     setDifficulty(newDifficulty);
+    setMove(newMove);
+    setTime(newTime);
     setShowStatus(false);
     setNewGame(true);
   }
@@ -214,7 +237,6 @@ export default function Game() {
       setFirstSelection(clickedCard);
       setCards(newCards);
     }
-    // console.log(clickedCard);
   }
 
   const saveGameStatus = async() => {
@@ -239,8 +261,8 @@ export default function Game() {
     message.success("Successfully saved the game data!");
   }
 
-  useEffect(()=>{
-      //check two cliked cards are a match or not
+  //check two cliked cards are a match or not
+  useEffect(()=>{  
     const matchCards = () =>{
       const delayTime = difficulty.getDelayTime();
       let newCards;
@@ -252,7 +274,6 @@ export default function Game() {
       else{
         //is a match
         if(firstSelection.emojiId === secondSelection.emojiId){
-          // console.log('match',firstSelection.emojiId);
           newCards = cards.map((card) => {
             if(card.key === firstSelection.key){
               return {...card, matchFound : true};
@@ -270,7 +291,6 @@ export default function Game() {
         //is not a match
         else{
           //flip back the cards
-          // console.log('not a match',firstSelection.emojiId, secondSelection.emojiId);
           newCards = cards.map((card) => {
             if(card.key === firstSelection.key){
               return {...card, flipped : false};
@@ -282,15 +302,14 @@ export default function Game() {
             }
           });
         }
-        //increment move
-        const newMove = new Move(move.getMaxSteps());
-        newMove.setSteps(move.getSteps()+1);
         setTimeout(() => {
-          // console.log("Delayed for " + delayTime);
           setFirstSelection(null);
           setSecondSelection(null);
           setCards(newCards);
-          setMove(newMove);
+          setMove((preMove) => {
+            const newMove = new Move(preMove.maxMove, preMove.moveSteps+1);
+            return newMove;
+          });
           setScore(newScore);
         }, delayTime);
       }
@@ -315,17 +334,13 @@ export default function Game() {
         resetTurns();
         resetDifficulty(difficulty);
         resetTime(time);
+        setPlaying(true);
       }
     }
     call(db);
-    let interval = setInterval(()=>{
-      setTime((time)=>{
-        const newTime = new Time(time.maxTime, time.time + 1);
-        return newTime;
-      });
-    },1000);
+    setNewInterval();
     return (()=>{
-      clearInterval(interval);
+      clearInterval(intervalRef.current);
     })
   }, []);
 
@@ -337,6 +352,15 @@ export default function Game() {
   //   });
   // }, 1000);
 
+  const setNewInterval = () => {
+    intervalRef.current = setInterval(()=>{
+      setTime((time)=>{
+        const newTime = new Time(time.maxTime, time.time + 1);
+        return newTime;
+      });
+    },1000);
+  }
+
   useEffect(()=>{
     if(time.maxTime === time.time){
       message.error("Time is over!");
@@ -344,11 +368,24 @@ export default function Game() {
     }
   },[time])
 
+  useEffect(()=>{
+    if(move.maxMove === move.moveSteps){
+      message.error("Max move reached!");
+      stopOrResume(true);
+    }
+  },[move])
+
   return (
     <div className='game'>
       <div className='gameheader'>
-        <Button size={'large'} onClick={() => newGame()}>New Game</Button>
-        <Button size={'large'} onClick={() => stopOrResume()}>{playing? 'Stop' : 'Resume'}</Button>
+        <Button size={'large'} onClick={() => setNewGame(true)}>New Game</Button>
+        <Button 
+          size={'large'} 
+          onClick={() => stopOrResume()} 
+          ref={resumeBtnRef}
+        >
+        {playing? 'Stop' : 'Resume'}
+        </Button>
         <Button size={'large'} onClick={() => saveGameStatus()}>Save</Button>
         <Button size={'large'} onClick={() => openSettings()}>Settings</Button>
       </div>
@@ -402,11 +439,102 @@ export default function Game() {
                 ]}
               />
             </Form.Item>
+            <Form.Item
+              name='flipBackTime'
+              initialValue={1}
+              label='Time shown for a mismatch (in second)'
+            >
+              <Select 
+                style={{
+                  width: 120,
+                }}
+                options={[
+                  {
+                    value: 1,
+                    label: '1',
+                  },
+                  {
+                    value: 2,
+                    label: '2',
+                  },
+                  {
+                    value: 3,
+                    label: '3',
+                  },
+                ]}
+              />
+            </Form.Item>
+            <Form.Item
+              name='maxTime'
+              initialValue={-1}
+              label='Time limit (in second)'
+            >
+              <Select 
+                style={{
+                  width: 120,
+                }}
+                options={[
+                  {
+                    value: 60,
+                    label: '60',
+                  },
+                  {
+                    value: 90,
+                    label: '90',
+                  },
+                  {
+                    value: 120,
+                    label: '120',
+                  },
+                  {
+                    value: 300,
+                    label: '300',
+                  },
+                  {
+                    value: -1,
+                    label: 'No limit',
+                  },
+                ]}
+              />
+            </Form.Item>
+            <Form.Item
+              name='maxMove'
+              initialValue={-1}
+              label='Move limit'
+            >
+              <Select 
+                style={{
+                  width: 120,
+                }}
+                options={[
+                  {
+                    value: 20,
+                    label: '20',
+                  },
+                  {
+                    value: 40,
+                    label: '40',
+                  },
+                  {
+                    value: 60,
+                    label: '60',
+                  },
+                  {
+                    value: 100,
+                    label: '100',
+                  },
+                  {
+                    value: -1,
+                    label: 'No limit',
+                  },
+                ]}
+              />
+            </Form.Item>
           </Form>
       </Modal>
       <div className='gamefooter'>
-        <span>Total Moves: {move.getSteps()}</span> 
-        <span>Moves Remain: {move.getRemainSteps()}</span>
+        <span>Total Moves: {move.moveSteps}</span> 
+        <span>Moves Remain: {move.maxMove === -1 ? '∞' : move.maxMove - move.moveSteps}</span>
         <span>Total Time: {time.time}</span>
         <span>Time Remain: {time.maxTime === -1 ? '∞' : time.maxTime - time.time}</span>
         <span>Total Score: {score.getScore()}</span>
@@ -415,23 +543,23 @@ export default function Game() {
   )
 }
 
-//another way to implement the interval
-function useInterval(callback, delay) {
-  const savedCallback = useRef();
+// //another way to implement the interval
+// function useInterval(callback, delay) {
+//   const savedCallback = useRef();
 
-  // Remember the latest callback.
-  useEffect(() => {
-    savedCallback.current = callback;
-  }, [callback]);
+//   // Remember the latest callback.
+//   useEffect(() => {
+//     savedCallback.current = callback;
+//   }, [callback]);
 
-  // Set up the interval.
-  useEffect(() => {
-    function tick() {
-      savedCallback.current();
-    }
-    if (delay !== null) {
-      let id = setInterval(tick, delay);
-      return () => clearInterval(id);
-    }
-  }, [delay]);
-}
+//   // Set up the interval.
+//   useEffect(() => {
+//     function tick() {
+//       savedCallback.current();
+//     }
+//     if (delay !== null) {
+//       let id = setInterval(tick, delay);
+//       return () => clearInterval(id);
+//     }
+//   }, [delay]);
+// }
