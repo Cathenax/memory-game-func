@@ -375,6 +375,24 @@ export default function Game() {
     }
   },[move])
 
+  useEffect(()=>{
+    let count = 0;
+    if(cards.length === 0){
+      return;
+    }
+    cards.forEach((card)=>{
+      if(card.matchFound === false){
+        count++;
+      }
+    })
+    if(count === 0 && playing){
+      message.success("You win!");
+      setPlaying(false);
+      clearInterval(intervalRef.current);
+      resumeBtnRef.current.disabled = true;
+    }
+  },[cards])
+
   return (
     <div className='game'>
       <div className='gameheader'>
