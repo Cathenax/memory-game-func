@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, useCallback } from 'react'
 import { Button, Modal, Select, Form, message} from 'antd';
 
 import Card from './card';
@@ -80,7 +80,6 @@ export default function Game() {
     let newTime;
     if(!dbtime){
       newTime = new Time(time.maxTime);
-      // newTime = new Time(5);
     }
     else{
       newTime = new Time(dbtime.maxtime, dbtime.time);
@@ -111,6 +110,9 @@ export default function Game() {
     resumeBtnRef.current.disabled = false;
     message.success("New game starts!");
   }
+
+  // useCallback to memorize the throttoled function
+  const newGameWithThrottole = useCallback(Throttole(newGame, 2000), []);
 
   const stopOrResume = async(stop) => {
     //stop the game
@@ -153,7 +155,7 @@ export default function Game() {
   // if user click on newGame or change the difficulty, restart
   useEffect(()=>{
     if(newGameStatus === true){
-      newGame();
+      newGameWithThrottole();
       setNewGame(false);
     }
   },[newGameStatus]);
@@ -325,7 +327,7 @@ export default function Game() {
       const userData = await db.getGameStatus();
       const {move, score, time, difficulty, cards} = userData;
       if(!userData || cards.length === 0){
-        newGame();
+        newGameWithThrottole();
       }
       else{
         //load data
@@ -559,6 +561,18 @@ export default function Game() {
       </div>
     </div>
   )
+}
+
+// Throttole function
+const Throttole = (fn, delay) => {
+  let prevTime = Date.now();
+  return ()=>{
+    const now = Date.now();
+    if(now - prevTime >= delay){
+      fn.apply();
+      prevTime = now;
+    }
+  }
 }
 
 // //another way to implement the interval

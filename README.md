@@ -22,3 +22,9 @@ https://drive.google.com/file/d/1w0Z5p9HtzYe69SZY_gxtxKgHda1tDb3B/view?usp=shari
 ## Presentation Video
 See on Google Drive:  
 https://drive.google.com/file/d/1wJ9w7PtwmWsolTMga3vseYCOsLqeP8lU/view?usp=sharing
+
+## Other Features
+This part is for further study in React and JavaScript.  
+1. ```Throttle Function --March 31st.```  
+   I implemented a throttole function that can decrease some complicated function (like starting a new game in this project) to be called too many times at a short time.  
+   This is done by using ```useCallback``` to memorize the throttled function.
