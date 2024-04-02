@@ -23,8 +23,17 @@ https://drive.google.com/file/d/1w0Z5p9HtzYe69SZY_gxtxKgHda1tDb3B/view?usp=shari
 See on Google Drive:  
 https://drive.google.com/file/d/1wJ9w7PtwmWsolTMga3vseYCOsLqeP8lU/view?usp=sharing
 
+## Cypress Testing
+#### Test Cases
+1. Click a card and flip it
+2. Start a new Game
+3. Stop the game
+4. Show the Difficulty Modal
+5. Match two cards
+#### Video
+https://drive.google.com/file/d/17SjEaPUuITzv2Vj_UK9N_NZZZnXQ3Ox-/view?usp=sharing
+
 ## Other Features
 This part is for further study in React and JavaScript.  
-1. ```Throttle Function --March 31st.```  
+1. ```Throttle Function --April 1st.```  
    I implemented a throttole function that can decrease some complicated function (like starting a new game in this project) to be called too many times at a short time.  
-   This is done by using ```useCallback``` to memorize the throttled function.

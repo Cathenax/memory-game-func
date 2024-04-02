@@ -111,8 +111,7 @@ export default function Game() {
     message.success("New game starts!");
   }
 
-  // useCallback to memorize the throttoled function
-  const newGameWithThrottole = useCallback(Throttole(newGame, 2000), []);
+  const newGameWithThrottole = Throttole(newGame, 2000);
 
   const stopOrResume = async(stop) => {
     //stop the game
@@ -565,12 +564,14 @@ export default function Game() {
 
 // Throttole function
 const Throttole = (fn, delay) => {
-  let prevTime = Date.now();
+  // use useRef here is important, by doing so the prevTime 
+  // will not change everytime Throttole function is defined again because of rerender
+  let prevTime = useRef(Date.now());
   return ()=>{
     const now = Date.now();
-    if(now - prevTime >= delay){
-      fn.apply();
-      prevTime = now;
+    if(now - prevTime.current >= delay){
+      fn();
+      prevTime.current = now;
     }
   }
 }
