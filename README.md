@@ -36,4 +36,7 @@ https://drive.google.com/file/d/17SjEaPUuITzv2Vj_UK9N_NZZZnXQ3Ox-/view?usp=shari
 ## Other Features
 This part is for further study in React and JavaScript.  
 1. ```Throttle Function --April 1st.```  
-   I implemented a throttole function that can decrease some complicated function (like starting a new game in this project) to be called too many times at a short time.  
+   I implemented a throttole function that can decrease some complicated function (like starting a new game in this project) to be called too many times at a short time.   
+2. ```Handling network disconnection --April 3rd.```
+   I implemented my own ```useNetwork``` hooks to check whether user stays online. This is done by using ```useEffect``` to add an event listener of online and offline event, and use ```useState``` to store the```window.navigator.onLine``` variable. In the game component, I use ```useEffect``` to make neccessary changes to the game when user come online or offline.
+  

@@ -17,14 +17,32 @@ export default function Game() {
   const [time, setTime] = useState(new Time());
   const intervalRef = useRef(null);
   const resumeBtnRef = useRef(null);
+  const saveBtnRef = useRef(null);
   const [cards, setCards] = useState([]);
   const [playing, setPlaying] = useState(true);
   const [showStatus, setShowStatus] = useState(false);
   const [firstSelection, setFirstSelection] = useState(null);
   const [secondSelection, setSecondSelection] = useState(null);
   const [newGameStatus, setNewGame] = useState(false);
+  // use my own hooks to check the online status
+  const online = useNetwork();
   let diffRef = React.createRef();
   const db = MyDB;
+
+  // function to handle offline status
+  useEffect(()=>{
+    // user is offline, send a message to alert, stop the game and disable save button
+    if(!online){
+      message.error("You're currently offline!");
+      stopOrResume(true);
+      resumeBtnRef.current.disabled = false;
+      saveBtnRef.current.disabled = true;
+    }
+    else{ // user is online
+      message.success("You're currently online!");
+      saveBtnRef.current.disabled = false;
+    }
+  }, [online])
 
   const resetMoveAndScore = (dbmove = null, dbscore = null) => {
     let newMove, newScore; 
@@ -405,7 +423,7 @@ export default function Game() {
         >
         {playing? 'Stop' : 'Resume'}
         </Button>
-        <Button size={'large'} onClick={() => saveGameStatus()}>Save</Button>
+        <Button size={'large'} onClick={() => saveGameStatus()} ref={saveBtnRef}>Save</Button>
         <Button size={'large'} onClick={() => openSettings()}>Settings</Button>
       </div>
       <div 
@@ -574,6 +592,23 @@ const Throttole = (fn, delay) => {
       prevTime.current = now;
     }
   }
+}
+
+// my own hooks to check the online status
+function useNetwork(){
+  const [online, setNetwork] = useState(window.navigator.onLine);
+  const updateNetwork = () => {
+    setNetwork(window.navigator.onLine);
+  };
+  useEffect(()=>{
+    window.addEventListener("offline", updateNetwork);
+    window.addEventListener("online", updateNetwork);
+    return () => {
+      window.removeEventListener("offline", updateNetwork);
+      window.removeEventListener("online", updateNetwork);
+    }
+  });
+  return online;
 }
 
 // //another way to implement the interval
